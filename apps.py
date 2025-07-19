@@ -3,7 +3,7 @@ import os
 import uuid
 
 import streamlit as st
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 
 # LangChain and LangGraph imports
@@ -107,28 +107,6 @@ def generate_verification_message(message: AIMessage):  # type: ignore
     )
 
 
-def stream_app_catch_tool_calls(inputs, thread, app):
-    pass
-
-
-def main():
-    st.title("Hooman in the loop agent")
-    st.markdown("This agent will ask for your approval before executing tools.")
-    if st.session_state.app is None:
-        with st.spinner("Initializing the agent ..."):
-            st.session_state.app = initialize_app()
-
-    if st.session_state.app is None:
-        st.error("Failed to initialize the agent. Please check your API keys.")
-        return
-
-    if st.session_state.conversation_history is None:
-        st.subheader("Conversation history")
-        for msg in st.session_state.conversation_history:
-            st.write(msg)
-        st.divider()
-
-
 def render_api_key_input():
     st.markdown("### :key: API Configuration")
     api_key_exists = bool(os.getenv("OPENAI_API_KEY")) and bool(
@@ -155,6 +133,79 @@ def render_api_key_input():
                 initialize_app()
             )  # Reinitialize the app with the new API key
             st.success(":white_check_mark: API key set successfully")
+
+
+def stream_app_catch_tool_calls(inputs, thread, app):
+    """Stream app, catching tool calls."""
+    tool_call_message = None
+    messages_to_display = []
+
+    try:
+        for event in app.stream(inputs, thread, stream_mode="values"):
+            message = event["messages"][-1]  # Get the last message
+            if isinstance(message, AIMessage) and message.tool_calls:
+                tool_call_message = message
+            messages_to_display.append(message)
+
+        # Display the messages
+        for msg in messages_to_display:
+            if isinstance(msg, AIMessage) and msg.content:
+                st.session_state.conversation_history.append(
+                    f"Assistant: {msg.content}"
+                )
+            elif isinstance(msg, ToolMessage) and msg.content:
+                st.session_state.conversation_history.append(
+                    f"Tool Result: {msg.content}"
+                )
+
+    except Exception as e:
+        st.error(f"Error in stream: {str(e)}")
+
+    return tool_call_message
+
+
+def main():
+    st.title("Hooman in the loop agent")
+    st.markdown("This agent will ask for your approval before executing tools.")
+    if st.session_state.app is None:
+        with st.spinner("Initializing the agent ..."):
+            st.session_state.app = initialize_app()
+
+    if st.session_state.app is None:
+        st.error("Failed to initialize the agent. Please check your API keys.")
+        return
+
+    # Display convo history
+    if st.session_state.conversation_history is None:
+        st.subheader("Conversation history")
+        for msg in st.session_state.conversation_history:
+            st.write(msg)
+        st.divider()
+
+    # Handle different states
+    if not st.session_state.waiting_for_approval:
+        st.subheader("Ask a question")
+        user_input = st.text_input("Enter your question: ", key="user_input")
+
+        if st.button("Submit Question", type="primary"):
+            if user_input:
+                st.session_state.conversation_history.append(f"You: {user_input}")
+
+                inputs = [HumanMessage(content=user_input)]
+
+                with st.spinner("Agent is thinking ..."):
+                    tool_call_message = stream_app_catch_tool_calls(
+                        {"messages": inputs},
+                        st.session_state.thread,
+                        st.session_state.app,
+                    )
+
+                if tool_call_message:
+                    st.session_state.tool_call_message = tool_call_message
+                    st.session_state.waiting_for_approval = True
+                    st.rerun()
+                else:
+                    st.success("Response completed without tool calls!")
 
 
 with st.sidebar:
