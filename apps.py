@@ -3,10 +3,10 @@ import os
 import uuid
 
 import streamlit as st
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from langchain_core.tools import tool
 
 # LangChain and LangGraph imports
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
@@ -27,8 +27,6 @@ if "conversation_history" not in st.session_state:
 
 
 # Define tools
-
-
 @tool
 def add_numbers(x: float, y: float) -> float:
     """Adds two floating-point numbers and returns their sum.
@@ -61,12 +59,9 @@ def initialize_app():
     try:
         tools = [TavilySearch(max_results=1), add_numbers, multiply_numbers]
         model = ChatOpenAI(model="mistralai/mistral-small-3.2-24b-instruct")
-        # model = model.bind_tools(tools)
 
         workflow = StateGraph(MessagesState)
-        model_with_tools = model.bind_tools(
-            tools
-        )  # Tell the model which tools are available at its disposal
+        model_with_tools = model.bind_tools(tools)
 
         workflow.add_node(
             "agent",
@@ -95,7 +90,7 @@ def initialize_app():
         return None
 
 
-def generate_verification_message(message: AIMessage):  # type: ignore
+def generate_verification_message(message: AIMessage):
     serialized_tool_calls = json.dumps(message.tool_calls, indent=2)
     return AIMessage(
         content=(
@@ -113,9 +108,9 @@ def render_api_key_input():
         os.getenv("TAVILY_API_KEY")
     )
     if api_key_exists:
-        st.success(":white_check_mark: API key found in environment")
+        st.success(":white_check_mark: API keys found in environment")
     else:
-        st.warning(":warning: API key not found in environment")
+        st.warning(":warning: API keys not found in environment")
 
         api_key = st.text_input(
             "Openrouter API Key",
@@ -126,13 +121,12 @@ def render_api_key_input():
         tavily_key = st.text_input(
             "Tavily API Key", type="password", help="Enter your Tavily API Key"
         )
-        if api_key:
+
+        if api_key and tavily_key:
             os.environ["OPENAI_API_KEY"] = os.environ["OPENROUTER_API_KEY"] = api_key
             os.environ["TAVILY_API_KEY"] = tavily_key
-            st.session_state.app = (
-                initialize_app()
-            )  # Reinitialize the app with the new API key
-            st.success(":white_check_mark: API key set successfully")
+            st.session_state.app = initialize_app()
+            st.success(":white_check_mark: API keys set successfully")
 
 
 def stream_app_catch_tool_calls(inputs, thread, app):
@@ -142,7 +136,7 @@ def stream_app_catch_tool_calls(inputs, thread, app):
 
     try:
         for event in app.stream(inputs, thread, stream_mode="values"):
-            message = event["messages"][-1]  # Get the last message
+            message = event["messages"][-1]
             if isinstance(message, AIMessage) and message.tool_calls:
                 tool_call_message = message
             messages_to_display.append(message)
@@ -164,28 +158,84 @@ def stream_app_catch_tool_calls(inputs, thread, app):
     return tool_call_message
 
 
+def handle_approval(approval):
+    """Handle user approval or rejection of tool execution."""
+    try:
+        verification_message = generate_verification_message(
+            st.session_state.tool_call_message
+        )
+        input_message = HumanMessage(approval)
+
+        # Get current state
+        snapshot = st.session_state.app.get_state(st.session_state.thread)
+        snapshot.values["messages"] += [verification_message, input_message]
+
+        if approval.lower() == "yes":
+            # Generate new ID for tool call message
+            st.session_state.tool_call_message.id = str(uuid.uuid4())
+            snapshot.values["messages"] += [st.session_state.tool_call_message]
+            st.session_state.app.update_state(
+                st.session_state.thread, snapshot.values, as_node="agent"
+            )
+
+            with st.spinner("Executing tool..."):
+                tool_call_message = stream_app_catch_tool_calls(
+                    None, st.session_state.thread, st.session_state.app
+                )
+
+            if tool_call_message:
+                st.session_state.tool_call_message = tool_call_message
+                st.rerun()
+            else:
+                st.success("Tool executed successfully!")
+                reset_state()
+        else:
+            st.session_state.app.update_state(
+                st.session_state.thread, snapshot.values, as_node="__start__"
+            )
+            st.warning("Tool execution rejected. You can ask a new question.")
+            reset_state()
+
+    except Exception as e:
+        st.error(f"Error handling approval: {str(e)}")
+        st.warning("Please try asking a new question.")
+        reset_state()
+
+
+def reset_state():
+    """Reset the approval state."""
+    st.session_state.waiting_for_approval = False
+    st.session_state.tool_call_message = None
+    try:
+        st.rerun()
+    except AttributeError:
+        st.rerun()
+
+
 def main():
-    st.title("Hooman in the loop agent")
+    st.title(":robot: Human-in-the-Loop Agent")
     st.markdown("This agent will ask for your approval before executing tools.")
+
+    # Initialize app if not already done
     if st.session_state.app is None:
-        with st.spinner("Initializing the agent ..."):
+        with st.spinner("Initializing the agent..."):
             st.session_state.app = initialize_app()
 
     if st.session_state.app is None:
         st.error("Failed to initialize the agent. Please check your API keys.")
         return
 
-    # Display convo history
-    if st.session_state.conversation_history is None:
-        st.subheader("Conversation history")
+    # Display conversation history
+    if st.session_state.conversation_history:
+        st.subheader("Conversation History")
         for msg in st.session_state.conversation_history:
             st.write(msg)
         st.divider()
 
     # Handle different states
     if not st.session_state.waiting_for_approval:
-        st.subheader("Ask a question")
-        user_input = st.text_input("Enter your question: ", key="user_input")
+        st.subheader("Ask a Question")
+        user_input = st.text_input("Enter your question:", key="user_input")
 
         if st.button("Submit Question", type="primary"):
             if user_input:
@@ -193,7 +243,7 @@ def main():
 
                 inputs = [HumanMessage(content=user_input)]
 
-                with st.spinner("Agent is thinking ..."):
+                with st.spinner("Agent is thinking..."):
                     tool_call_message = stream_app_catch_tool_calls(
                         {"messages": inputs},
                         st.session_state.thread,
@@ -203,13 +253,56 @@ def main():
                 if tool_call_message:
                     st.session_state.tool_call_message = tool_call_message
                     st.session_state.waiting_for_approval = True
-                    st.rerun()
+                    try:
+                        st.rerun()
+                    except AttributeError:
+                        st.rerun()
                 else:
                     st.success("Response completed without tool calls!")
 
+    else:
+        # Handle waiting for approval state
+        st.subheader("🛠️ Tool Approval Required")
+        if st.session_state.tool_call_message:
+            tool_calls = st.session_state.tool_call_message.tool_calls
 
+            for i, tool_call in enumerate(tool_calls):
+                st.info(f"**Tool {i+1}:** {tool_call['name']}")
+                st.code(json.dumps(tool_call["args"], indent=2), language="json")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("✅ Approve", type="primary"):
+                    handle_approval("yes")
+
+            with col2:
+                if st.button("❌ Reject", type="secondary"):
+                    handle_approval("no")
+
+
+# Sidebar for API key configuration
 with st.sidebar:
     render_api_key_input()
+    st.subheader("Controls")
+    if st.button("🔄 Reset Conversation"):
+        st.session_state.conversation_history = []
+        st.session_state.thread = {"configurable": {"thread_id": str(uuid.uuid4())}}
+        reset_state()
+
+    st.subheader("Setup")
+    st.markdown(
+        """
+    **Required Environment Variables:**
+    - `OPENAI_API_KEY`: Your OpenAI API key
+    - `TAVILY_API_KEY`: Your Tavily API key (for web search)
+
+    **Available Tools:**
+    - Web search (Tavily)
+    - Add numbers
+    - Multiply numbers
+    """
+    )
 
 if __name__ == "__main__":
     main()
