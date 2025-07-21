@@ -1,0 +1,146 @@
+flowchart TD
+    A[Agent Initialize] --> B[Load User Context & History]
+    B --> C[NLP: Parse User Input]
+    C --> D[Intent Classification]
+
+    D --> E{Intent Type?}
+    E -->|Learning Query| F[Knowledge Base Search]
+    E -->|Progress Check| G[Analytics Engine]
+    E -->|Help Request| H[Conversational AI]
+    E -->|Goal Setting| I[Goal Management]
+
+    F --> J[Generate Learning Response]
+    G --> K[ML: Analyze Performance Data]
+    H --> L[Context-Aware Help]
+    I --> M[Smart Goal Recommendation]
+
+    J --> N[Content Personalization Engine]
+    K --> O{Performance Prediction}
+    L --> P[Multi-Modal Response]
+    M --> Q[Learning Path Generator]
+
+    O -->|At Risk| R[Early Intervention AI]
+    O -->|On Track| S[Positive Reinforcement AI]
+    O -->|Excelling| T[Advanced Challenge AI]
+
+    R --> U[Adaptive Support Strategy]
+    S --> V[Motivation & Engagement]
+    T --> W[Difficulty Scaling]
+
+    U --> X[Intervention Recommendation]
+    V --> Y[Progress Celebration]
+    W --> Z[Advanced Content Curation]
+
+    X --> AA[Real-Time Tutoring]
+    Y --> BB[Gamification Elements]
+    Z --> CC[Concept Mapping]
+
+    N --> DD[LLM: Generate Explanation]
+    P --> EE[Sentiment Analysis]
+    Q --> FF[Curriculum Alignment]
+
+    DD --> GG[Response Confidence Score]
+    EE --> HH{User Emotional State}
+    FF --> II[Prerequisite Checker]
+
+    GG --> JJ{Confidence > Threshold?}
+    HH -->|Frustrated| KK[Empathy Response Mode]
+    HH -->|Motivated| LL[Encouragement Mode]
+    HH -->|Neutral| MM[Standard Mode]
+
+    JJ -->|Yes| NN[Deliver Response]
+    JJ -->|No| OO[Escalate to Human]
+
+    KK --> PP[Stress Reduction Techniques]
+    LL --> QQ[Challenge Amplification]
+    MM --> RR[Balanced Approach]
+
+    AA --> SS[Conversational Learning]
+    BB --> TT[Achievement Tracking]
+    CC --> UU[Knowledge Graph Update]
+
+    PP --> VV[Adaptive Pacing]
+    QQ --> WW[Stretch Goals]
+    RR --> XX[Standard Progression]
+
+    SS --> YY[Memory & Context Update]
+    TT --> ZZ[Behavioral Pattern Recognition]
+    UU --> AAA[Concept Relationship Learning]
+
+    NN --> BBB[User Feedback Collection]
+    OO --> CCC[Human Handoff Protocol]
+
+    VV --> DDD[Learning State Update]
+    WW --> DDD
+    XX --> DDD
+
+    YY --> EEE[Reinforcement Learning]
+    ZZ --> EEE
+    AAA --> EEE
+
+    BBB --> FFF{Feedback Sentiment}
+    CCC --> GGG[Expert Consultation]
+
+    FFF -->|Positive| HHH[Model Reinforcement]
+    FFF -->|Negative| III[Model Correction]
+    FFF -->|Neutral| JJJ[Continue Monitoring]
+
+    GGG --> KKK[Human-AI Collaboration]
+
+    DDD --> LLL[Predictive Analytics Update]
+    EEE --> MMM[Agent Learning & Improvement]
+
+    HHH --> NNN[Success Pattern Storage]
+    III --> OOO[Failure Analysis & Correction]
+    JJJ --> PPP[Baseline Monitoring]
+
+    KKK --> QQQ[Enhanced Response Generation]
+
+    LLL --> RRR[Session Summary Generation]
+    MMM --> SSS[Model Fine-tuning]
+
+    NNN --> TTT[Best Practice Database]
+    OOO --> TTT
+    PPP --> TTT
+
+    QQQ --> UUU[Hybrid AI-Human Response]
+
+    RRR --> VVV{Continue Session?}
+    SSS --> WWW[Agent Capability Update]
+
+    VVV -->|Yes| XXX[Maintain Context]
+    VVV -->|No| YYY[Save Session State]
+
+    XXX --> C
+    YYY --> ZZZ[Schedule Follow-up]
+
+    TTT --> AAAA[Knowledge Base Enhancement]
+    UUU --> BBBB[Response Quality Metrics]
+    WWW --> CCCC[Agent Version Control]
+
+    ZZZ --> DDDD[Automated Reminders]
+    AAAA --> EEEE[Continuous Learning Loop]
+    BBBB --> FFFF[Performance Analytics]
+    CCCC --> GGGG[Agent Deployment]
+
+    DDDD --> HHHH[End Session]
+    EEEE --> IIII[Knowledge Graph Expansion]
+    FFFF --> JJJJ[Quality Assurance]
+    GGGG --> KKKK[Agent Monitoring]
+
+    style A fill:#e1f5fe,color:#000000
+    style E fill:#ffb74d,color:#000000
+    style O fill:#ffb74d,color:#000000
+    style HH fill:#ffb74d,color:#000000
+    style JJ fill:#ffb74d,color:#000000
+    style FFF fill:#ffb74d,color:#000000
+    style VVV fill:#ffb74d,color:#000000
+    style C fill:#f8bbd9,color:#000000
+    style D fill:#f8bbd9,color:#000000
+    style K fill:#dcedc8,color:#000000
+    style R fill:#ffcdd2,color:#000000
+    style S fill:#c8e6c9,color:#000000
+    style T fill:#fff3e0,color:#000000
+    style MMM fill:#e3f2fd,color:#000000
+    style SSS fill:#e3f2fd,color:#000000
+    style HHHH fill:#e1f5fe,color:#000000
