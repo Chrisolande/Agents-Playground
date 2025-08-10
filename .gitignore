@@ -13,3 +13,6 @@ wheels/
 .python-version
 .vincent/
 .benchmarks/
+.idea/
+.ruff_cache/
+.qodo/
