@@ -26,8 +26,8 @@ class PubMedScraper:
     email: str
     authors: list[str] = None
     topics: list[str] = None
-    start_date: str = "2012/03/01"
-    end_date: str = "2022/12/31"
+    start_date: str = "01/01/2012"
+    end_date: str = "27/08/2025"
     max_results: int = 10
     delay: float = 0.34
     output_file: str = "pubmed_results.csv"
@@ -141,7 +141,7 @@ class PubMedScraper:
             ]
             publication_date = "-".join(date_parts)
 
-            # References (first 5)
+            # References (first 5) with PMID links
             references = []
             try:
                 ref_list = record.get("PubmedData", {}).get("ReferenceList", [])
@@ -149,17 +149,39 @@ class PubMedScraper:
                     for ref in ref_group.get("Reference", []):
                         citation = ref.get("Citation", "").strip()
                         if citation:
-                            # Add PMID if available
+                            # Extract PMID from ArticleIdList
+                            pmid_found = None
                             for article_id in ref.get("ArticleIdList", []):
+                                # Check if it's a dictionary with IdType
                                 if (
+                                    isinstance(article_id, dict)
+                                    and article_id.get("IdType") == "pubmed"
+                                ):
+                                    pmid_found = str(article_id.get("content", ""))
+                                # Check if it's an object with attributes
+                                elif (
                                     hasattr(article_id, "attributes")
                                     and article_id.attributes.get("IdType") == "pubmed"
                                 ):
-                                    citation += f" [PMID: {article_id}]"
+                                    pmid_found = str(article_id)
+                                # Direct string check (fallback)
+                                elif str(article_id).isdigit():
+                                    pmid_found = str(article_id)
+
+                                if pmid_found:
                                     break
+
+                            # Append PMID link if found
+                            if pmid_found:
+                                citation += (
+                                    f" https://pubmed.ncbi.nlm.nih.gov/{pmid_found}"
+                                )
+
                             references.append(citation)
                         if len(references) >= 5:
                             break
+                    if len(references) >= 5:
+                        break
             except Exception:
                 pass
 
@@ -204,7 +226,7 @@ class PubMedScraper:
                     time.sleep(self.delay)
 
             except Exception as e:
-                logger.warning(f"Fetch error for batch {i // batch_size + 1}: {e}")
+                logger.warning(f"Batch {i // batch_size + 1} fetch error: {e}")
                 continue
 
         return articles
