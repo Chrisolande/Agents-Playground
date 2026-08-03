@@ -101,8 +101,3 @@ class RetrieverReportGenerator:
         markdown_report = markdown_report.replace("---\n", f"{stats_section}\n---\n", 1)
 
         return markdown_report, grouped_docs, stats
-
-
-
-    
-    

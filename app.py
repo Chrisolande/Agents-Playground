@@ -86,7 +86,7 @@ def initialize_app():
         return app
 
     except Exception as e:
-        st.error(f"Error initializing app: {str(e)}")
+        st.error(f"Error initializing app: {e!s}")
         return None
 
 
@@ -153,7 +153,7 @@ def stream_app_catch_tool_calls(inputs, thread, app):
                 )
 
     except Exception as e:
-        st.error(f"Error in stream: {str(e)}")
+        st.error(f"Error in stream: {e!s}")
 
     return tool_call_message
 
@@ -197,7 +197,7 @@ def handle_approval(approval):
             reset_state()
 
     except Exception as e:
-        st.error(f"Error handling approval: {str(e)}")
+        st.error(f"Error handling approval: {e!s}")
         st.warning("Please try asking a new question.")
         reset_state()
 
@@ -267,7 +267,7 @@ def main():
             tool_calls = st.session_state.tool_call_message.tool_calls
 
             for i, tool_call in enumerate(tool_calls):
-                st.info(f"**Tool {i+1}:** {tool_call['name']}")
+                st.info(f"**Tool {i + 1}:** {tool_call['name']}")
                 st.code(json.dumps(tool_call["args"], indent=2), language="json")
 
             col1, col2 = st.columns(2)
@@ -289,19 +289,19 @@ with st.sidebar:
         st.session_state.conversation_history = []
         st.session_state.thread = {"configurable": {"thread_id": str(uuid.uuid4())}}
         reset_state()
-
     st.subheader("Setup")
     st.markdown(
-        """
-    **Required Environment Variables:**
-    - `OPENAI_API_KEY`: Your OpenAI API key
-    - `TAVILY_API_KEY`: Your Tavily API key (for web search)
+        """**Required Environment Variables:**
 
-    **Available Tools:**
-    - Web search (Tavily)
-    - Add numbers
-    - Multiply numbers
-    """
+        - `OPENAI_API_KEY`: Your OpenAI API key
+        - `TAVILY_API_KEY`: Your Tavily API key (for web search)
+
+        **Available Tools:**
+        - Web search (Tavily)
+        - Add numbers
+        - Multiply numbers
+        """
+
     )
 
 if __name__ == "__main__":

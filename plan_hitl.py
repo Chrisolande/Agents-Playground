@@ -1,9 +1,10 @@
-from dotenv import load_dotenv
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
-from langchain_deepseek import ChatDeepSeek
 from typing import Literal
-from langgraph.types import interrupt, Command
+
+from dotenv import load_dotenv
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_deepseek import ChatDeepSeek
 from langgraph.graph import MessagesState, StateGraph
+from langgraph.types import Command, interrupt
 
 _ = load_dotenv()
 
@@ -33,10 +34,10 @@ def create_plan_node(state: PlannerState):
         prompt = f"""TASK TO ACCOMPLISH: {task}
 
 Previous plan:
-{state.get('plan', 'No prior plan.')}
+{state.get("plan", "No prior plan.")}
 
 User feedback:
-{state.get('human_action', 'No feedback provided.')}
+{state.get("human_action", "No feedback provided.")}
 
 Instructions:
 1. Revise the plan based on user feedback.

@@ -1,15 +1,16 @@
+import os
 import time
-import pandas as pd
-from typing import Literal
 from dataclasses import dataclass
+from typing import Literal
+
+import pandas as pd
 from Bio import Entrez
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
-from langchain_deepseek import ChatDeepSeek
 from langchain_core.messages import HumanMessage, SystemMessage
-from prompts import pubmed_parser_prompt
+from langchain_deepseek import ChatDeepSeek
 from loguru import logger
-import os
+from prompts import pubmed_parser_prompt
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -164,10 +165,7 @@ class PubMedScraper:
                                 elif (
                                     hasattr(article_id, "attributes")
                                     and article_id.attributes.get("IdType") == "pubmed"
-                                ):
-                                    pmid_found = str(article_id)
-                                # Direct string check (fallback)
-                                elif str(article_id).isdigit():
+                                ) or str(article_id).isdigit():
                                     pmid_found = str(article_id)
 
                                 if pmid_found:

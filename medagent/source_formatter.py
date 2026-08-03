@@ -1,8 +1,8 @@
 from dataclasses import dataclass
+from typing import Any
 
 from IPython.display import Markdown, display
 from loguru import logger
-from typing_extensions import Any
 
 
 @dataclass
